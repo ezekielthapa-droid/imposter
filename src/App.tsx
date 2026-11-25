@@ -186,9 +186,28 @@ function PwaInstallButton() {
     }
   }
 
+  const userAgent = navigator.userAgent;
   const isAppleMobile =
-    /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    /iPhone|iPad|iPod/.test(userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(userAgent);
+  const isEdge = /Edg/i.test(userAgent);
+  const isChrome = /Chrome|CriOS/i.test(userAgent) && !isEdge;
+  const isSafari = /Safari/i.test(userAgent) && !isChrome && !isEdge;
+  const isFirefox = /Firefox|FxiOS/i.test(userAgent);
+  const installInstructions = isAppleMobile
+    ? "In Safari, tap Share, choose Add to Home Screen, then tap Add."
+    : isAndroid
+      ? "Open your browser menu (⋮) and choose Install app or Add to Home screen."
+      : isEdge
+        ? "In Microsoft Edge, open Settings and more (…) → Apps → Install this site as an app."
+        : isChrome
+          ? "In Chrome, use the install icon in the address bar, or open ⋮ → Cast, save, and share → Install page as app."
+          : isSafari
+            ? "In Safari on Mac, choose File → Add to Dock."
+            : isFirefox
+              ? "Firefox does not support installing PWAs. Open this site in Chrome or Edge and use its install option."
+              : "Open your browser menu and choose Install app or Add to Home screen. Some browsers require Chrome, Edge, or Safari to install apps.";
 
   return (
     <>
@@ -225,16 +244,7 @@ function PwaInstallButton() {
             <span className="kicker">Take the game with you</span>
             <h2 id="install-title">Install IMPOSTER</h2>
             <p>
-              {isAppleMobile ? (
-                <>
-                  In Safari, tap <b>Share</b>, then choose <b>Add to Home Screen</b>.
-                </>
-              ) : (
-                <>
-                  Open your browser menu and choose <b>Install app</b> or <b>Add to Home screen</b>.
-                  You can also use the install icon in the address bar.
-                </>
-              )}
+              This browser hasn’t opened its direct install prompt. {installInstructions}
             </p>
             <button className="secondary-button install-dismiss" onClick={() => setHelpOpen(false)}>
               Got it
