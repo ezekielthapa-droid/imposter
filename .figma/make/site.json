@@ -1,0 +1,10 @@
+{
+  "description": "A social deduction word game for friends to play in person, with secret roles, clue-giving, and voting to uncover the impostor. Customize categories and game rules for every group.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
