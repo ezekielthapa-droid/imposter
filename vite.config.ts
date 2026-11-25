@@ -1,6 +1,7 @@
 import { defineConfig, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -21,6 +22,50 @@ export default defineConfig(({ mode }) => {
     plugins: [
 react(),
       tailwindcss(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: [
+          'apple-touch-icon.png',
+          'imposter-192.png',
+          'imposter-512.png',
+          'imposter.svg',
+        ],
+        manifest: {
+          name: 'IMPOSTER — Party Game',
+          short_name: 'IMPOSTER',
+          description: 'One word. One imposter. Get your crew together and find the fake.',
+          theme_color: '#0a0b0a',
+          background_color: '#0a0b0a',
+          display: 'standalone',
+          start_url: '/',
+          scope: '/',
+          icons: [
+            {
+              src: '/imposter-192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: '/imposter-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: '/imposter-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
+          ],
+        },
+        workbox: {
+          cleanupOutdatedCaches: true,
+          globPatterns: ['**/*.{css,html,ico,js,png,svg,webmanifest}'],
+          navigateFallback: '/index.html',
+        },
+      }),
       figmaSiteConfiguration(siteConfiguration),
       figmaErrorOverlayReplay(),
       figmaReactRefreshBoundaryFallback(),

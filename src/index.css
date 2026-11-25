@@ -28,6 +28,16 @@
 .logo-mark span { width: 7px; height: 7px; border-radius: 50%; background: #c8fa45; box-shadow: 9px 0 0 #c8fa45; transform: translateX(-4px); }
 .avatar-button { width: 42px; height: 42px; border: 1px solid #343630; border-radius: 50%; background: linear-gradient(145deg,#34352e,#181917); color: #efffbe; font-weight: 700; font-size: 12px; position: relative; }
 .online-dot { position: absolute; width: 9px; height: 9px; background: #c8fa45; border: 2px solid #11120f; border-radius: 50%; right: 0; bottom: 1px; }
+.header-actions { display:flex; align-items:center; gap:10px }
+.install-button { min-height:40px; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:0 15px; border:1px solid #c8fa4570; border-radius:13px; color:#dfff91; background:linear-gradient(145deg,#283319e8,#171b12e8); box-shadow:inset 0 1px #ffffff12,0 6px 22px #c8fa4510; font:700 11px 'Manrope'; letter-spacing:.15px; transition:transform .2s,border-color .2s,box-shadow .2s,background .2s }
+.install-button:hover { transform:translateY(-1px); border-color:#c8fa45; background:linear-gradient(145deg,#354522,#1a2013); box-shadow:inset 0 1px #ffffff16,0 8px 26px #c8fa4520 }
+.install-button svg { color:#c8fa45 }
+.install-complete { min-height:40px; display:inline-flex; align-items:center; gap:7px; padding:0 13px; border:1px solid #c8fa4530; border-radius:13px; color:#b8c892; background:#c8fa4509; font:600 10px 'Manrope' }
+.install-complete svg { color:#c8fa45 }
+.install-modal { animation:slideUp .3s ease }
+.install-modal p { margin:15px 0 22px; color:#a0a397; font-size:13px; line-height:1.75 }
+.install-modal p b { color:#efffbe }
+.install-dismiss { width:100%; justify-content:center }
 
 main, footer { position: relative; z-index: 1; }
 .hero { padding: 64px 20px 68px; text-align: center; max-width: 800px; margin: auto; }
@@ -199,6 +209,14 @@ footer { max-width:1060px; margin:auto; padding:35px 20px 45px; border-top:1px s
   .create-submit { flex-direction:column; width:100% }
   .create-submit .name-input, .create-submit .primary-button { width:100%; max-width:none; min-width:0 }
   .setup-summary > div { gap:10px }
+}
+
+@media (max-width: 380px) {
+  .install-button { width:40px; min-height:40px; padding:0; gap:0 }
+  .install-button span { display:none }
+  .header-actions { gap:6px }
+  .create-header { padding-right:12px; padding-left:12px }
+  .game-round { font-size:9px; letter-spacing:1px }
 }
 
 @media (prefers-reduced-motion: reduce) {

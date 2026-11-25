@@ -31,6 +31,7 @@ type IconName =
   | "clock"
   | "crown"
   | "edit"
+  | "download"
   | "globe"
   | "lock"
   | "minus"
@@ -56,6 +57,12 @@ const icons: Record<IconName, React.ReactNode> = {
     </>
   ),
   crown: <path d="m3 7 4 3 5-6 5 6 4-3-2 11H5L3 7Z" />,
+  download: (
+    <>
+      <path d="M12 3v12m-5-5 5 5 5-5" />
+      <path d="M5 17v3h14v-3" />
+    </>
+  ),
   edit: (
     <>
       <path d="m4 20 4.2-1L19 8.2 15.8 5 5 15.8 4 20Z" />
@@ -124,6 +131,121 @@ function Logo({ compact = false }: { compact?: boolean }) {
   );
 }
 
+type InstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
+
+function PwaInstallButton() {
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
+  const [installed, setInstalled] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  useEffect(() => {
+    const standaloneQuery = window.matchMedia("(display-mode: standalone)");
+    const updateInstalled = () =>
+      setInstalled(
+        standaloneQuery.matches || ("standalone" in navigator && navigator.standalone === true),
+      );
+    const handleInstallAvailable = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as InstallPromptEvent);
+    };
+    const handleInstalled = () => {
+      setInstalled(true);
+      setInstallPrompt(null);
+      setHelpOpen(false);
+    };
+
+    updateInstalled();
+    window.addEventListener("beforeinstallprompt", handleInstallAvailable);
+    window.addEventListener("appinstalled", handleInstalled);
+    standaloneQuery.addEventListener("change", updateInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleInstallAvailable);
+      window.removeEventListener("appinstalled", handleInstalled);
+      standaloneQuery.removeEventListener("change", updateInstalled);
+    };
+  }, []);
+
+  async function handleInstall() {
+    if (!installPrompt) {
+      setHelpOpen(true);
+      return;
+    }
+
+    try {
+      await installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      if (choice.outcome === "accepted") {
+        setInstalled(true);
+        setInstallPrompt(null);
+      }
+    } catch {
+      setHelpOpen(true);
+    }
+  }
+
+  const isAppleMobile =
+    /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  return (
+    <>
+      {installed ? (
+        <span className="install-complete" role="status">
+          <Icon name="check" size={15} />
+          <span>Installed</span>
+        </span>
+      ) : (
+        <button className="install-button" onClick={() => void handleInstall()}>
+          <Icon name="download" size={16} />
+          <span>Install app</span>
+        </button>
+      )}
+      {helpOpen && (
+        <div className="modal-backdrop" onMouseDown={() => setHelpOpen(false)}>
+          <section
+            className="join-modal install-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="install-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button
+              className="close-button"
+              onClick={() => setHelpOpen(false)}
+              aria-label="Close install instructions"
+            >
+              <Icon name="x" />
+            </button>
+            <span className="modal-symbol">
+              <Icon name="download" size={26} />
+            </span>
+            <span className="kicker">Take the game with you</span>
+            <h2 id="install-title">Install IMPOSTER</h2>
+            <p>
+              {isAppleMobile ? (
+                <>
+                  In Safari, tap <b>Share</b>, then choose <b>Add to Home Screen</b>.
+                </>
+              ) : (
+                <>
+                  Open your browser menu and choose <b>Install app</b> or <b>Add to Home screen</b>.
+                  You can also use the install icon in the address bar.
+                </>
+              )}
+            </p>
+            <button className="secondary-button install-dismiss" onClick={() => setHelpOpen(false)}>
+              Got it
+            </button>
+          </section>
+        </div>
+      )}
+    </>
+  );
+}
+
 const categories = [
   { name: "Mix it up", sub: "All categories", icon: "✦", key: "all" },
   { name: "Pop culture", sub: "Movies, music & fame", icon: "◐", key: "pop-culture" },
@@ -173,10 +295,13 @@ function Home({
       <div className="ambient ambient-two" />
       <header className="topbar">
         <Logo />
-        <button className="avatar-button" aria-label="Player profile">
-          <span className="online-dot" />
-          <span>{name.trim().slice(0, 2).toUpperCase() || "AX"}</span>
-        </button>
+        <div className="header-actions">
+          <PwaInstallButton />
+          <button className="avatar-button" aria-label="Player profile">
+            <span className="online-dot" />
+            <span>{name.trim().slice(0, 2).toUpperCase() || "AX"}</span>
+          </button>
+        </div>
       </header>
       <main>
         <section className="hero">
@@ -488,9 +613,12 @@ function CreateGame({
           ‹
         </button>
         <Logo />
-        <button className="icon-button" aria-label="Profile">
-          <Icon name="profile" />
-        </button>
+        <div className="header-actions">
+          <PwaInstallButton />
+          <button className="icon-button" aria-label="Profile">
+            <Icon name="profile" />
+          </button>
+        </div>
       </header>
       <main className="create-main">
         <div className="create-intro">
@@ -751,14 +879,17 @@ function Lobby({
           ‹
         </button>
         <Logo />
-        <button
-          className="icon-button"
-          aria-label="Edit game settings"
-          onClick={onEdit}
-          disabled={!isHost}
-        >
-          <Icon name="edit" />
-        </button>
+        <div className="header-actions">
+          <PwaInstallButton />
+          <button
+            className="icon-button"
+            aria-label="Edit game settings"
+            onClick={onEdit}
+            disabled={!isHost}
+          >
+            <Icon name="edit" />
+          </button>
+        </div>
       </header>
       <main className="lobby">
         <span className="lobby-status">
@@ -969,9 +1100,12 @@ function GameScreen({
           ‹
         </button>
         <Logo />
-        <span className="game-round">
-          Round {game.round_number} · {room.code}
-        </span>
+        <div className="header-actions">
+          <PwaInstallButton />
+          <span className="game-round">
+            Round {game.round_number} · {room.code}
+          </span>
+        </div>
       </header>
       <main className="lobby game-main">
         <span className="lobby-status">

@@ -15,3 +15,7 @@ Guest identities are stored by Supabase in the browser session. Players can use 
 ## Current game flow
 
 The Classic mode supports guest lobbies, readiness, live player presence, role reveal, sequential clue rounds, private voting, multiple imposters, an optional final imposter guess, and results. The word bank is seeded by the migration. Rapid Fire and profile/game-history screens are not connected to a backend yet.
+
+## Install as an app
+
+The production build includes a web app manifest, an auto-updating service worker, and an **Install app** button in the header. Deploy over HTTPS (Vercel provides this automatically). Supported browsers show their native install prompt; Safari and other browsers without that prompt show instructions for installing from the browser menu. The app shell can load offline, but online multiplayer still needs an internet connection.
