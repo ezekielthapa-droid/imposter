@@ -174,12 +174,14 @@ function PwaInstallButton() {
       return;
     }
 
+    const prompt = installPrompt;
+    setInstallPrompt(null);
+
     try {
-      await installPrompt.prompt();
-      const choice = await installPrompt.userChoice;
+      await prompt.prompt();
+      const choice = await prompt.userChoice;
       if (choice.outcome === "accepted") {
         setInstalled(true);
-        setInstallPrompt(null);
       }
     } catch {
       setHelpOpen(true);
@@ -190,24 +192,12 @@ function PwaInstallButton() {
   const isAppleMobile =
     /iPhone|iPad|iPod/.test(userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const isAndroid = /Android/i.test(userAgent);
   const isEdge = /Edg/i.test(userAgent);
-  const isChrome = /Chrome|CriOS/i.test(userAgent) && !isEdge;
-  const isSafari = /Safari/i.test(userAgent) && !isChrome && !isEdge;
-  const isFirefox = /Firefox|FxiOS/i.test(userAgent);
   const installInstructions = isAppleMobile
-    ? "In Safari, tap Share, choose Add to Home Screen, then tap Add."
-    : isAndroid
-      ? "Open your browser menu (⋮) and choose Install app or Add to Home screen."
-      : isEdge
-        ? "In Microsoft Edge, open Settings and more (…) → Apps → Install this site as an app."
-        : isChrome
-          ? "In Chrome, use the install icon in the address bar, or open ⋮ → Cast, save, and share → Install page as app."
-          : isSafari
-            ? "In Safari on Mac, choose File → Add to Dock."
-            : isFirefox
-              ? "Firefox does not support installing PWAs. Open this site in Chrome or Edge and use its install option."
-              : "Open your browser menu and choose Install app or Add to Home screen. Some browsers require Chrome, Edge, or Safari to install apps.";
+    ? "Safari: Share → Add to Home Screen."
+    : isEdge
+      ? "Edge: ⋯ → Apps → Install this site as an app."
+      : "Choose Install app in your browser menu.";
 
   return (
     <>
@@ -217,7 +207,11 @@ function PwaInstallButton() {
           <span>Installed</span>
         </span>
       ) : (
-        <button className="install-button" onClick={() => void handleInstall()}>
+        <button
+          className="install-button"
+          aria-label="Install app"
+          onClick={() => void handleInstall()}
+        >
           <Icon name="download" size={16} />
           <span>Install app</span>
         </button>
@@ -243,9 +237,7 @@ function PwaInstallButton() {
             </span>
             <span className="kicker">Take the game with you</span>
             <h2 id="install-title">Install IMPOSTER</h2>
-            <p>
-              This browser hasn’t opened its direct install prompt. {installInstructions}
-            </p>
+            <p>{installInstructions}</p>
             <button className="secondary-button install-dismiss" onClick={() => setHelpOpen(false)}>
               Got it
             </button>
