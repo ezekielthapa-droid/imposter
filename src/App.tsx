@@ -189,15 +189,19 @@ function PwaInstallButton() {
   }
 
   const userAgent = navigator.userAgent;
+  const isEmbeddedBrowser = /Electron|Figma/i.test(userAgent);
+  const isWindows = /Windows/i.test(userAgent);
   const isAppleMobile =
     /iPhone|iPad|iPod/.test(userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const isEdge = /Edg/i.test(userAgent);
-  const installInstructions = isAppleMobile
-    ? "Safari: Share → Add to Home Screen."
-    : isEdge
-      ? "Edge: ⋯ → Apps → Install this site as an app."
-      : "Choose Install app in your browser menu.";
+  const installInstructions = isEmbeddedBrowser
+    ? "This preview runs inside VS Code and cannot install apps. Open the live site in Microsoft Edge, then choose ⋯ → Apps → Install this site as an app."
+    : isAppleMobile
+      ? "In Safari, tap Share → Add to Home Screen."
+      : isEdge
+        ? "In Edge, choose ⋯ → Apps → Install this site as an app."
+        : "Choose Install app in your browser menu.";
 
   return (
     <>
@@ -233,6 +237,14 @@ function PwaInstallButton() {
             <span className="kicker">Take the game with you</span>
             <h2 id="install-title">Install IMPOSTER</h2>
             <p>{installInstructions}</p>
+            {isEmbeddedBrowser && isWindows && (
+              <a
+                className="secondary-button install-dismiss"
+                href="microsoft-edge:https://imposter-zeta-mauve.vercel.app/"
+              >
+                Open in Microsoft Edge
+              </a>
+            )}
             <button className="secondary-button install-dismiss" onClick={() => setHelpOpen(false)}>
               Got it
             </button>
