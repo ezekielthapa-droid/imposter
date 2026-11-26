@@ -34,9 +34,18 @@
 .install-button svg { color:#c8fa45 }
 .install-complete { min-height:40px; display:inline-flex; align-items:center; gap:7px; padding:0 13px; border:1px solid #c8fa4530; border-radius:13px; color:#b8c892; background:#c8fa4509; font:600 10px 'Manrope' }
 .install-complete svg { color:#c8fa45 }
-.install-modal { animation:slideUp .3s ease }
-.install-modal p { margin:15px 0 22px; color:#a0a397; font-size:13px; line-height:1.75 }
-.install-modal p b { color:#efffbe }
+.install-modal { width:100%; min-width:0; max-width:470px; box-sizing:border-box; padding:24px; text-align:left; animation:slideUp .3s ease; background:radial-gradient(ellipse at 0 0,#424f9666,transparent 58%),linear-gradient(145deg,#151b2a,#090b10 72%); border-color:#6675b04a }
+.install-modal .close-button { top:12px; right:12px }
+.install-promo { min-width:0; min-height:108px; display:flex; align-items:center; gap:17px; padding:10px 24px 10px 10px }
+.install-promo > div { min-width:0 }
+.install-app-icon { width:70px; height:70px; flex:0 0 auto; display:grid; place-items:center; border-radius:21px; background:radial-gradient(circle at 35% 30%,#9385ff,#5042b8 48%,#171d37 50%); box-shadow:0 10px 30px #0008 }
+.install-app-icon .logo-mark { width:35px; height:39px; border-width:3px; border-radius:10px 10px 15px 15px; background:#10131d; box-shadow:0 4px 14px #0009 }
+.install-app-icon .logo-mark span { width:8px; height:8px; box-shadow:10px 0 0 #c8fa45; transform:translateX(-4px) }
+.install-promo .kicker { font-size:9px; letter-spacing:1.7px }
+.install-promo h2 { margin:4px 0; color:#fff; font:800 clamp(19px,5vw,25px)/1.1 'Manrope'; letter-spacing:-.7px; overflow-wrap:anywhere }
+.install-promo p { margin:0; color:#aeb3c0; font-size:11px; line-height:1.45 }
+.install-steps { display:flex; align-items:flex-start; gap:11px; margin:15px 0 18px; padding:14px; border:1px solid #ffffff12; border-radius:14px; background:#ffffff08; color:#d5d9e3; font-size:12px; line-height:1.6 }
+.install-steps svg { flex:0 0 auto; margin-top:1px; color:#c8fa45 }
 .install-dismiss { width:100%; justify-content:center }
 
 main, footer { position: relative; z-index: 1; }

@@ -189,19 +189,19 @@ function PwaInstallButton() {
   }
 
   const userAgent = navigator.userAgent;
-  const isEmbeddedBrowser = /Electron|Figma/i.test(userAgent);
-  const isWindows = /Windows/i.test(userAgent);
   const isAppleMobile =
     /iPhone|iPad|iPod/.test(userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const isEdge = /Edg/i.test(userAgent);
-  const installInstructions = isEmbeddedBrowser
-    ? "This preview runs inside VS Code and cannot install apps. Open the live site in Microsoft Edge, then choose ⋯ → Apps → Install this site as an app."
-    : isAppleMobile
-      ? "In Safari, tap Share → Add to Home Screen."
-      : isEdge
-        ? "In Edge, choose ⋯ → Apps → Install this site as an app."
-        : "Choose Install app in your browser menu.";
+  const isAndroid = /Android/i.test(userAgent);
+  const isSafari =
+    /Safari/i.test(userAgent) && !/Chrome|CriOS|Edg|Firefox|FxiOS/i.test(userAgent);
+  const installInstructions = isAppleMobile
+    ? "Tap Share, then choose Add to Home Screen."
+    : isAndroid
+      ? "Open your browser menu (⋮), then choose Install app or Add to Home screen."
+      : isSafari
+        ? "In Safari, choose File → Add to Dock."
+        : "Open your browser menu and choose Install app or Add to Home screen.";
 
   return (
     <>
@@ -231,20 +231,22 @@ function PwaInstallButton() {
             >
               <Icon name="x" />
             </button>
-            <span className="modal-symbol">
-              <Icon name="download" size={26} />
-            </span>
-            <span className="kicker">Take the game with you</span>
-            <h2 id="install-title">Install IMPOSTER</h2>
-            <p>{installInstructions}</p>
-            {isEmbeddedBrowser && isWindows && (
-              <a
-                className="secondary-button install-dismiss"
-                href="microsoft-edge:https://imposter-zeta-mauve.vercel.app/"
-              >
-                Open in Microsoft Edge
-              </a>
-            )}
+            <div className="install-promo">
+              <span className="install-app-icon">
+                <span className="logo-mark">
+                  <span />
+                </span>
+              </span>
+              <div>
+                <span className="kicker">DOWNLOAD THE GAME</span>
+                <h2 id="install-title">IMPOSTER, READY TO PLAY</h2>
+                <p>Keep the party one tap away.</p>
+              </div>
+            </div>
+            <div className="install-steps">
+              <Icon name="download" size={18} />
+              <span>{installInstructions}</span>
+            </div>
             <button className="secondary-button install-dismiss" onClick={() => setHelpOpen(false)}>
               Got it
             </button>
