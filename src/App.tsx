@@ -136,6 +136,17 @@ type InstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
+let deferredInstallPrompt: InstallPromptEvent | null = null;
+const installPromptListeners = new Set<(prompt: InstallPromptEvent | null) => void>();
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event as InstallPromptEvent;
+    installPromptListeners.forEach((listener) => listener(deferredInstallPrompt));
+  });
+}
+
 function PwaInstallButton() {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
@@ -147,22 +158,21 @@ function PwaInstallButton() {
       setInstalled(
         standaloneQuery.matches || ("standalone" in navigator && navigator.standalone === true),
       );
-    const handleInstallAvailable = (event: Event) => {
-      event.preventDefault();
-      setInstallPrompt(event as InstallPromptEvent);
-    };
+    const handleInstallAvailable = (prompt: InstallPromptEvent | null) => setInstallPrompt(prompt);
     const handleInstalled = () => {
       setInstalled(true);
+      deferredInstallPrompt = null;
       setInstallPrompt(null);
       setHelpOpen(false);
     };
 
     updateInstalled();
-    window.addEventListener("beforeinstallprompt", handleInstallAvailable);
+    handleInstallAvailable(deferredInstallPrompt);
+    installPromptListeners.add(handleInstallAvailable);
     window.addEventListener("appinstalled", handleInstalled);
     standaloneQuery.addEventListener("change", updateInstalled);
     return () => {
-      window.removeEventListener("beforeinstallprompt", handleInstallAvailable);
+      installPromptListeners.delete(handleInstallAvailable);
       window.removeEventListener("appinstalled", handleInstalled);
       standaloneQuery.removeEventListener("change", updateInstalled);
     };
@@ -175,6 +185,7 @@ function PwaInstallButton() {
     }
 
     const prompt = installPrompt;
+    deferredInstallPrompt = null;
     setInstallPrompt(null);
 
     try {
@@ -189,6 +200,7 @@ function PwaInstallButton() {
   }
 
   const userAgent = navigator.userAgent;
+  const isChrome = /Chrome|CriOS/i.test(userAgent) && !/Edg|OPR/i.test(userAgent);
   const isAppleMobile =
     /iPhone|iPad|iPod/.test(userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -198,9 +210,11 @@ function PwaInstallButton() {
   const installInstructions = isAppleMobile
     ? "Tap Share, then choose Add to Home Screen."
     : isAndroid
-      ? "Open your browser menu (⋮), then choose Install app or Add to Home screen."
+      ? "Tap ⋮, then Install app. If it isn’t listed, choose Add to Home screen."
       : isSafari
         ? "In Safari, choose File → Add to Dock."
+        : isChrome
+          ? "Tap the install icon in the address bar, or open ⋮ → Install IMPOSTER."
         : "Open your browser menu and choose Install app or Add to Home screen.";
 
   return (
@@ -239,7 +253,7 @@ function PwaInstallButton() {
               </span>
               <div>
                 <span className="kicker">DOWNLOAD THE GAME</span>
-                <h2 id="install-title">IMPOSTER, READY TO PLAY</h2>
+                <h2 id="install-title">INSTALL IMPOSTER</h2>
                 <p>Keep the party one tap away.</p>
               </div>
             </div>
