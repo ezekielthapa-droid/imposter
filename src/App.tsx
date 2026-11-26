@@ -253,7 +253,7 @@ function PwaInstallButton() {
               </span>
               <div>
                 <span className="kicker">DOWNLOAD THE GAME</span>
-                <h2 id="install-title">INSTALL IMPOSTER</h2>
+                <h2 id="install-title">APP NOW!</h2>
                 <p>Keep the party one tap away.</p>
               </div>
             </div>
