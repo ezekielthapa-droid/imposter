@@ -150,7 +150,8 @@ if (typeof window !== "undefined") {
 function PwaInstallButton() {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [installNotice, setInstallNotice] = useState<"unavailable" | "error" | null>(null);
 
   useEffect(() => {
     const standaloneQuery = window.matchMedia("(display-mode: standalone)");
@@ -158,12 +159,15 @@ function PwaInstallButton() {
       setInstalled(
         standaloneQuery.matches || ("standalone" in navigator && navigator.standalone === true),
       );
-    const handleInstallAvailable = (prompt: InstallPromptEvent | null) => setInstallPrompt(prompt);
+    const handleInstallAvailable = (prompt: InstallPromptEvent | null) => {
+      setInstallPrompt(prompt);
+      if (prompt) setInstallNotice(null);
+    };
     const handleInstalled = () => {
       setInstalled(true);
       deferredInstallPrompt = null;
       setInstallPrompt(null);
-      setHelpOpen(false);
+      setInstallNotice(null);
     };
 
     updateInstalled();
@@ -180,13 +184,14 @@ function PwaInstallButton() {
 
   async function handleInstall() {
     if (!installPrompt) {
-      setHelpOpen(true);
+      setInstallNotice("unavailable");
       return;
     }
 
     const prompt = installPrompt;
     deferredInstallPrompt = null;
     setInstallPrompt(null);
+    setInstalling(true);
 
     try {
       await prompt.prompt();
@@ -194,43 +199,34 @@ function PwaInstallButton() {
       if (choice.outcome === "accepted") {
         setInstalled(true);
       }
-    } catch {
-      setHelpOpen(true);
+    } catch (error) {
+      console.error("The native PWA install prompt failed.", error);
+      setInstallNotice("error");
+    } finally {
+      setInstalling(false);
     }
   }
 
-  const userAgent = navigator.userAgent;
-  const isChrome = /Chrome|CriOS/i.test(userAgent) && !/Edg|OPR/i.test(userAgent);
-  const isAppleMobile =
-    /iPhone|iPad|iPod/.test(userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const isAndroid = /Android/i.test(userAgent);
-  const isSafari =
-    /Safari/i.test(userAgent) && !/Chrome|CriOS|Edg|Firefox|FxiOS/i.test(userAgent);
-  const installInstructions = isAppleMobile
-    ? "Tap Share, then choose Add to Home Screen."
-    : isAndroid
-      ? "Tap ⋮, then Install app. If it isn’t listed, choose Add to Home screen."
-      : isSafari
-        ? "In Safari, choose File → Add to Dock."
-        : isChrome
-          ? "Tap the install icon in the address bar, or open ⋮ → Install IMPOSTER."
-        : "Open your browser menu and choose Install app or Add to Home screen.";
-
   return (
     <>
-      {!installed && (
+      {installed ? (
+        <span className="install-complete" role="status">
+          <Icon name="check" size={16} />
+          <span>Installed</span>
+        </span>
+      ) : (
         <button
           className="install-button"
           aria-label="Install app"
+          disabled={installing}
           onClick={() => void handleInstall()}
         >
           <Icon name="download" size={16} />
-          <span>Install app</span>
+          <span>{installing ? "Opening..." : "Install app"}</span>
         </button>
       )}
-      {helpOpen && (
-        <div className="modal-backdrop" onMouseDown={() => setHelpOpen(false)}>
+      {installNotice && (
+        <div className="modal-backdrop" onMouseDown={() => setInstallNotice(null)}>
           <section
             className="join-modal install-modal"
             role="dialog"
@@ -240,8 +236,8 @@ function PwaInstallButton() {
           >
             <button
               className="close-button"
-              onClick={() => setHelpOpen(false)}
-              aria-label="Close install instructions"
+              onClick={() => setInstallNotice(null)}
+              aria-label="Close install message"
             >
               <Icon name="x" />
             </button>
@@ -252,16 +248,23 @@ function PwaInstallButton() {
                 </span>
               </span>
               <div>
-                <span className="kicker">INSTALL FROM YOUR BROWSER</span>
-                <h2 id="install-title">ADD IMPOSTER</h2>
-                <p>Adds an app icon to your home screen—there’s no file download.</p>
+                <span className="kicker">
+                  {installNotice === "error" ? "INSTALL PROMPT ERROR" : "NATIVE INSTALL"}
+                </span>
+                <h2 id="install-title">
+                  {installNotice === "error" ? "PROMPT FAILED" : "NOT AVAILABLE YET"}
+                </h2>
+                <p>
+                  {installNotice === "error"
+                    ? "Your browser couldn't open the installation prompt. Please try again."
+                    : "This browser has not made the installation prompt available for this page."}
+                </p>
               </div>
             </div>
-            <div className="install-steps">
-              <Icon name="download" size={18} />
-              <span>{installInstructions}</span>
-            </div>
-            <button className="secondary-button install-dismiss" onClick={() => setHelpOpen(false)}>
+            <button
+              className="secondary-button install-dismiss"
+              onClick={() => setInstallNotice(null)}
+            >
               Got it
             </button>
           </section>
