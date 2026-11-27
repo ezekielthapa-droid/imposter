@@ -15,6 +15,14 @@
     <link rel="icon" type="image/svg+xml" href="/imposter.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>IMPOSTER — Party Game</title>
+    <script>
+      window.__imposterDeferredInstallPrompt = null;
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        window.__imposterDeferredInstallPrompt = event;
+        window.dispatchEvent(new Event("imposterinstallpromptavailable"));
+      });
+    </script>
     <!-- figma:head-end -->
   </head>
   <body>

@@ -24,6 +24,9 @@ react(),
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        devOptions: {
+          enabled: true,
+        },
         includeAssets: [
           'apple-touch-icon.png',
           'imposter-192.png',
@@ -31,23 +34,24 @@ react(),
           'imposter.svg',
         ],
         manifest: {
+          id: '.',
           name: 'IMPOSTER — Party Game',
           short_name: 'IMPOSTER',
           description: 'One word. One imposter. Get your crew together and find the fake.',
           theme_color: '#0a0b0a',
           background_color: '#0a0b0a',
           display: 'standalone',
-          start_url: '/',
-          scope: '/',
+          start_url: '.',
+          scope: '.',
           icons: [
             {
-              src: '/imposter-192.png',
+              src: 'imposter-192.png',
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/imposter-512.png',
+              src: 'imposter-512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',

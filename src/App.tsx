@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   castVote,
   createRoom,
@@ -136,22 +136,17 @@ type InstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
-let deferredInstallPrompt: InstallPromptEvent | null = null;
-const installPromptListeners = new Set<(prompt: InstallPromptEvent | null) => void>();
-
-if (typeof window !== "undefined") {
-  window.addEventListener("beforeinstallprompt", (event) => {
-    event.preventDefault();
-    deferredInstallPrompt = event as InstallPromptEvent;
-    installPromptListeners.forEach((listener) => listener(deferredInstallPrompt));
-  });
+declare global {
+  interface Window {
+    __imposterDeferredInstallPrompt: InstallPromptEvent | null;
+  }
 }
 
 function PwaInstallButton() {
-  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [installNotice, setInstallNotice] = useState<"unavailable" | "error" | null>(null);
+  const installAttemptInProgress = useRef(false);
 
   useEffect(() => {
     const standaloneQuery = window.matchMedia("(display-mode: standalone)");
@@ -159,38 +154,38 @@ function PwaInstallButton() {
       setInstalled(
         standaloneQuery.matches || ("standalone" in navigator && navigator.standalone === true),
       );
-    const handleInstallAvailable = (prompt: InstallPromptEvent | null) => {
-      setInstallPrompt(prompt);
-      if (prompt) setInstallNotice(null);
+    const handleInstallAvailable = () => {
+      if (window.__imposterDeferredInstallPrompt) setInstallNotice(null);
     };
     const handleInstalled = () => {
       setInstalled(true);
-      deferredInstallPrompt = null;
-      setInstallPrompt(null);
+      window.__imposterDeferredInstallPrompt = null;
       setInstallNotice(null);
     };
 
     updateInstalled();
-    handleInstallAvailable(deferredInstallPrompt);
-    installPromptListeners.add(handleInstallAvailable);
+    handleInstallAvailable();
+    window.addEventListener("imposterinstallpromptavailable", handleInstallAvailable);
     window.addEventListener("appinstalled", handleInstalled);
     standaloneQuery.addEventListener("change", updateInstalled);
     return () => {
-      installPromptListeners.delete(handleInstallAvailable);
+      window.removeEventListener("imposterinstallpromptavailable", handleInstallAvailable);
       window.removeEventListener("appinstalled", handleInstalled);
       standaloneQuery.removeEventListener("change", updateInstalled);
     };
   }, []);
 
   async function handleInstall() {
-    if (!installPrompt) {
+    if (installAttemptInProgress.current) return;
+
+    const prompt = window.__imposterDeferredInstallPrompt;
+    if (!prompt) {
       setInstallNotice("unavailable");
       return;
     }
 
-    const prompt = installPrompt;
-    deferredInstallPrompt = null;
-    setInstallPrompt(null);
+    installAttemptInProgress.current = true;
+    window.__imposterDeferredInstallPrompt = null;
     setInstalling(true);
 
     try {
@@ -203,9 +198,35 @@ function PwaInstallButton() {
       console.error("The native PWA install prompt failed.", error);
       setInstallNotice("error");
     } finally {
+      installAttemptInProgress.current = false;
       setInstalling(false);
     }
   }
+
+  const userAgent = navigator.userAgent;
+  const isAppleMobile =
+    /iPhone|iPad|iPod/.test(userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(userAgent);
+  const isEdge = /Edg/i.test(userAgent);
+  const isChrome = /Chrome|CriOS/i.test(userAgent) && !isEdge;
+  const isSafari =
+    /Safari/i.test(userAgent) && !/Chrome|CriOS|Edg|Firefox|FxiOS/i.test(userAgent);
+  const installInstructions = isAppleMobile
+    ? "On iPhone or iPad, use Share → Add to Home Screen."
+    : isAndroid
+      ? isEdge
+        ? "In Microsoft Edge for Android, open ⋯ and choose Install."
+        : isChrome
+          ? "In Chrome for Android, open ⋮ and choose Install app or Add to Home screen."
+          : "Open your browser menu and look for Install app or Add to Home Screen."
+      : isEdge
+        ? "In Microsoft Edge, select the install icon in the address bar, or open ⋯ → Apps → Install this site as an app."
+        : isChrome
+          ? "In Google Chrome, select Install IMPOSTER in the address bar or open ⋮ and choose Install IMPOSTER."
+          : isSafari
+            ? "In Safari on macOS Sonoma or later, choose File → Add to Dock."
+            : "Open your browser menu and look for Install app or Add to Home Screen.";
 
   return (
     <>
@@ -249,15 +270,15 @@ function PwaInstallButton() {
               </span>
               <div>
                 <span className="kicker">
-                  {installNotice === "error" ? "INSTALL PROMPT ERROR" : "NATIVE INSTALL"}
+                  {installNotice === "error" ? "INSTALL PROMPT ERROR" : "INSTALL FROM BROWSER"}
                 </span>
                 <h2 id="install-title">
-                  {installNotice === "error" ? "PROMPT FAILED" : "NOT AVAILABLE YET"}
+                  {installNotice === "error" ? "PROMPT FAILED" : "CONTINUE IN YOUR BROWSER"}
                 </h2>
                 <p>
                   {installNotice === "error"
                     ? "Your browser couldn't open the installation prompt. Please try again."
-                    : "This browser has not made the installation prompt available for this page."}
+                    : installInstructions}
                 </p>
               </div>
             </div>
