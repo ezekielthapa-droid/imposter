@@ -252,9 +252,9 @@ function PwaInstallButton() {
                 </span>
               </span>
               <div>
-                <span className="kicker">DOWNLOAD THE GAME</span>
-                <h2 id="install-title">APP NOW!</h2>
-                <p>Keep the party one tap away.</p>
+                <span className="kicker">INSTALL FROM YOUR BROWSER</span>
+                <h2 id="install-title">ADD IMPOSTER</h2>
+                <p>Adds an app icon to your home screen—there’s no file download.</p>
               </div>
             </div>
             <div className="install-steps">
