@@ -17,10 +17,26 @@
     <title>IMPOSTER — Party Game</title>
     <script>
       window.__imposterDeferredInstallPrompt = null;
+      window.__imposterInstallPromptStatus = "waiting";
+      console.info("[PWA] Install prompt listener registered; waiting for the browser event.", {
+        secureContext: window.isSecureContext,
+        userAgent: navigator.userAgent,
+      });
       window.addEventListener("beforeinstallprompt", (event) => {
         event.preventDefault();
+        if (window.__imposterDeferredInstallPrompt) {
+          console.warn("[PWA] Duplicate beforeinstallprompt received; preserving the pending event.");
+          return;
+        }
         window.__imposterDeferredInstallPrompt = event;
+        window.__imposterInstallPromptStatus = "available";
+        console.info("[PWA] beforeinstallprompt received; native installation prompt is available.");
         window.dispatchEvent(new Event("imposterinstallpromptavailable"));
+      });
+      window.addEventListener("appinstalled", () => {
+        window.__imposterDeferredInstallPrompt = null;
+        window.__imposterInstallPromptStatus = "installed";
+        console.info("[PWA] appinstalled event received.");
       });
     </script>
     <!-- figma:head-end -->

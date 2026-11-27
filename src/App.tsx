@@ -139,6 +139,7 @@ type InstallPromptEvent = Event & {
 declare global {
   interface Window {
     __imposterDeferredInstallPrompt: InstallPromptEvent | null;
+    __imposterInstallPromptStatus: "waiting" | "available" | "consumed" | "accepted" | "installed";
   }
 }
 
@@ -165,6 +166,12 @@ function PwaInstallButton() {
 
     updateInstalled();
     handleInstallAvailable();
+    console.info("[PWA] Install UI initialized.", {
+      displayModeStandalone: standaloneQuery.matches,
+      legacyStandalone: "standalone" in navigator && navigator.standalone === true,
+      capturedPromptAvailable: Boolean(window.__imposterDeferredInstallPrompt),
+      promptStatus: window.__imposterInstallPromptStatus,
+    });
     window.addEventListener("imposterinstallpromptavailable", handleInstallAvailable);
     window.addEventListener("appinstalled", handleInstalled);
     standaloneQuery.addEventListener("change", updateInstalled);
@@ -179,19 +186,35 @@ function PwaInstallButton() {
     if (installAttemptInProgress.current) return;
 
     const prompt = window.__imposterDeferredInstallPrompt;
+    console.info("[PWA] Install button clicked.", {
+      capturedPromptAvailable: Boolean(prompt),
+      promptStatus: window.__imposterInstallPromptStatus,
+      secureContext: window.isSecureContext,
+      standalone: window.matchMedia("(display-mode: standalone)").matches,
+      eligibilityApi: "No standard browser API exposes PWA install eligibility.",
+    });
     if (!prompt) {
+      console.warn(
+        "[PWA] No beforeinstallprompt event has been received in this page session; showing browser-specific fallback. This does not prove the app is ineligible.",
+      );
       setInstallNotice("unavailable");
       return;
     }
 
     installAttemptInProgress.current = true;
     window.__imposterDeferredInstallPrompt = null;
+    window.__imposterInstallPromptStatus = "consumed";
     setInstalling(true);
 
     try {
+      console.info("[PWA] Calling the captured native install prompt.");
       await prompt.prompt();
       const choice = await prompt.userChoice;
+      console.info(`[PWA] User ${choice.outcome} the native install prompt.`, {
+        platform: choice.platform,
+      });
       if (choice.outcome === "accepted") {
+        window.__imposterInstallPromptStatus = "accepted";
         setInstalled(true);
       }
     } catch (error) {
