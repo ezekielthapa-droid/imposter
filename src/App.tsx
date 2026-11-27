@@ -19,6 +19,7 @@ import {
   startGame,
   submitClue,
   submitFinalGuess,
+  updateMyIdentity,
   updateRoomSettings,
 } from "./lib/gameApi";
 import { getSupabaseClient } from "./lib/supabase";
@@ -116,6 +117,75 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
       aria-hidden="true"
     >
       {icons[name]}
+    </svg>
+  );
+}
+
+function ModeArtwork({ mode }: { mode: "classic" | "rapid" | "world" }) {
+  if (mode === "classic") {
+    return (
+      <svg className="mode-artwork" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path
+          d="M10.8 13.2 29 9.5a3 3 0 0 1 3.5 2.3l4.7 23a3 3 0 0 1-2.3 3.5l-18.2 3.6a3 3 0 0 1-3.5-2.3l-4.7-23a3 3 0 0 1 2.3-3.4Z"
+          fill="#35451D"
+          stroke="#91B92D"
+          strokeWidth="1.5"
+        />
+        <path
+          d="M18 7.8h16a3.5 3.5 0 0 1 3.5 3.5v25.4a3.5 3.5 0 0 1-3.5 3.5H18a3.5 3.5 0 0 1-3.5-3.5V11.3A3.5 3.5 0 0 1 18 7.8Z"
+          fill="url(#classic-card-fill)"
+          stroke="#D7FF59"
+          strokeWidth="1.5"
+        />
+        <path d="m19.4 18.6 2.4 1.5 3.1-4 3.1 4 2.4-1.5-1.3 7.1h-8.4l-1.3-7.1Z" fill="#263416" />
+        <circle cx="23" cy="31.2" r="1.6" fill="#263416" />
+        <circle cx="29" cy="31.2" r="1.6" fill="#263416" />
+        <defs>
+          <linearGradient id="classic-card-fill" x1="16" y1="8" x2="39" y2="39" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#C8FA45" />
+            <stop offset="1" stopColor="#6D9828" />
+          </linearGradient>
+        </defs>
+      </svg>
+    );
+  }
+
+  if (mode === "rapid") {
+    return (
+      <svg className="mode-artwork" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <path d="M6 17h5M4 23h6M7 29h4" stroke="#C1A7FF" strokeWidth="2" strokeLinecap="round" />
+        <path
+          d="M29.5 7.5h-8l-1 4.2a13.5 13.5 0 1 0 10 0l-1-4.2ZM18.5 7.5h14"
+          stroke="#D1BEFF"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx="25.5" cy="26" r="9.5" fill="url(#rapid-clock-fill)" />
+        <path d="M25.5 20.5v6l4 2.5" stroke="#281D45" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="m36.5 13 1.2-2.5 1.2 2.5 2.6 1.2-2.6 1.2-1.2 2.6-1.2-2.6-2.5-1.2 2.5-1.2Z" fill="#E0D3FF" />
+        <defs>
+          <linearGradient id="rapid-clock-fill" x1="17" y1="16" x2="34" y2="36" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#D0B9FF" />
+            <stop offset="1" stopColor="#8B63D8" />
+          </linearGradient>
+        </defs>
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="mode-artwork" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <circle cx="23" cy="24" r="15" fill="url(#world-globe-fill)" stroke="#A1D8D0" strokeWidth="1.5" />
+      <path d="M8.5 24h29M23 9c4.4 4.1 6.6 9.1 6.6 15S27.4 34.9 23 39M23 9c-4.4 4.1-6.6 9.1-6.6 15S18.6 34.9 23 39" stroke="#17443F" strokeWidth="1.5" />
+      <path d="M31.5 18.5a7.5 7.5 0 0 1 7.5 7.5c0 5.2-7.5 11.5-7.5 11.5S24 31.2 24 26a7.5 7.5 0 0 1 7.5-7.5Z" fill="#D6FFF7" stroke="#5CABA0" strokeWidth="1.5" />
+      <circle cx="31.5" cy="26" r="2.5" fill="#337B71" />
+      <defs>
+        <linearGradient id="world-globe-fill" x1="10" y1="10" x2="36" y2="39" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#B6E9E0" />
+          <stop offset="1" stopColor="#619B91" />
+        </linearGradient>
+      </defs>
     </svg>
   );
 }
@@ -260,7 +330,7 @@ function PwaInstallButton() {
           disabled={installing}
           onClick={() => void handleInstall()}
         >
-          <Icon name="download" size={16} />
+          <img className="install-button-icon" src="/imposter-192.png" alt="" />
           <span>{installing ? "Opening..." : "Install app"}</span>
         </button>
       )}
@@ -282,9 +352,7 @@ function PwaInstallButton() {
             </button>
             <div className="install-promo">
               <span className="install-app-icon">
-                <span className="logo-mark">
-                  <span />
-                </span>
+                <img src="/imposter-192.png" alt="" />
               </span>
               <div>
                 <span className="kicker">
@@ -320,26 +388,326 @@ const categories = [
   { name: "Food & drink", sub: "For the hungry", icon: "◇", key: "food" },
 ];
 
-function savedName() {
-  return localStorage.getItem("imposter-player-name") ?? "";
+type PlayerIdentity = { nickname: string; avatar: string };
+
+const playerAvatars = [
+  { id: "avatar-mask", name: "The Mask", color: "#d8bd4e", face: "mask" },
+  { id: "avatar-lime", name: "The Lookout", color: "#c5f442", face: "calm" },
+  { id: "avatar-violet", name: "The Phantom", color: "#a477ff", face: "smirk" },
+  { id: "avatar-cyan", name: "The Signal", color: "#4ed8e8", face: "robot" },
+  { id: "avatar-coral", name: "The Suspect", color: "#ff705e", face: "frown" },
+  { id: "avatar-mint", name: "The Insider", color: "#61d9a1", face: "smile" },
+  { id: "avatar-gold", name: "The Wildcard", color: "#e5bd52", face: "star" },
+];
+const legacyPlayerAvatars = ["👀", "🎭", "👻", "🤖", "😈", "😎", "🦊", "🐸"];
+const defaultPlayerAvatar = playerAvatars[0].id;
+const identityStorageKey = "imposter-player-profile";
+
+function normalizePlayerAvatar(avatar: string): string {
+  const legacyAvatarIndex = legacyPlayerAvatars.indexOf(avatar);
+  return legacyAvatarIndex >= 0
+    ? playerAvatars[Math.min(legacyAvatarIndex, playerAvatars.length - 1)].id
+    : avatar;
 }
 
-function saveName(name: string) {
-  const cleaned = name.trim().slice(0, 24);
-  localStorage.setItem("imposter-player-name", cleaned);
-  return cleaned;
+function AvatarIllustration({ avatar }: { avatar: string }) {
+  const normalizedAvatar = normalizePlayerAvatar(avatar);
+  const preset = playerAvatars.find((item) => item.id === normalizedAvatar);
+  if (!preset) return <>{normalizedAvatar || "?"}</>;
+
+  const face = preset.face;
+  return (
+    <svg className="avatar-illustration" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <path d="M9 18.5c0-8.1 6.4-14 15-14s15 5.9 15 14v11c0 8.2-6.2 14-15 14S9 37.7 9 29.5v-11Z" fill="#101310" stroke={preset.color} strokeWidth="1.5" />
+      {face === "mask" && <path d="m13 13 3-7 5 5 3-7 4 7 6-4 1 8" stroke={preset.color} strokeWidth="1.4" strokeLinejoin="round" />}
+      {face === "star" ? (
+        <path d="m24 13 2.4 6.1 6.6.4-5.1 4.2 1.7 6.4-5.6-3.6-5.6 3.6 1.7-6.4-5.1-4.2 6.6-.4L24 13Z" fill={`${preset.color}28`} stroke={preset.color} strokeWidth="1.5" strokeLinejoin="round" />
+      ) : (
+        <>
+          {face === "robot" && <path d="M24 7V4m-2 0h4" stroke={preset.color} strokeWidth="1.5" strokeLinecap="round" />}
+          <path d={face === "mask" ? "M14 20.5 22 18l-1 6-7 1.5Zm12 0 8 1.5-7 2-1-6Z" : "M16.5 20.5v.1m15-.1v.1"} stroke={preset.color} strokeWidth={face === "mask" ? "1.5" : "3"} strokeLinecap="round" strokeLinejoin="round" />
+          {face === "robot" && <path d="M15 17h18v13H15z" stroke={preset.color} strokeWidth="1.3" />}
+          <path
+            d={
+              face === "smile" ? "M18 29c2 4 10 4 12 0" :
+              face === "frown" ? "M18 33c2-4 10-4 12 0" :
+              face === "smirk" ? "M19 30c3 2 7 2 11-1" :
+              face === "focused" ? "M19 31h10" :
+              face === "robot" ? "M20 35h8" :
+              "M19 30c2 2 8 2 10 0"
+            }
+            stroke={preset.color}
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+          {face === "focused" && <path d="m14 17 5 1m15-1-5 1" stroke={preset.color} strokeWidth="1.3" strokeLinecap="round" />}
+        </>
+      )}
+      <path d="M17 39.5h14" stroke={preset.color} strokeWidth="1.2" strokeLinecap="round" opacity=".55" />
+    </svg>
+  );
+}
+
+function savedIdentity(): PlayerIdentity | null {
+  try {
+    const stored = localStorage.getItem(identityStorageKey);
+    if (stored) {
+      const parsed = JSON.parse(stored) as Partial<PlayerIdentity>;
+      if (typeof parsed.nickname === "string" && typeof parsed.avatar === "string") {
+        return { nickname: parsed.nickname, avatar: normalizePlayerAvatar(parsed.avatar) };
+      }
+    }
+    const legacyName = localStorage.getItem("imposter-player-name")?.trim();
+    return legacyName ? { nickname: legacyName.slice(0, 24), avatar: defaultPlayerAvatar } : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveIdentity(identity: PlayerIdentity) {
+  const saved = { nickname: identity.nickname.trim().slice(0, 24), avatar: identity.avatar };
+  localStorage.setItem(identityStorageKey, JSON.stringify(saved));
+  localStorage.setItem("imposter-player-name", saved.nickname);
+  return saved;
+}
+
+function PlayerAvatar({ avatar, nickname, className = "" }: {
+  avatar?: string | null;
+  nickname: string;
+  className?: string;
+}) {
+  const normalizedAvatar = avatar ? normalizePlayerAvatar(avatar) : defaultPlayerAvatar;
+  if (normalizedAvatar.startsWith("data:image/")) {
+    return <img className={`player-avatar ${className}`} src={normalizedAvatar} alt={`${nickname}'s avatar`} />;
+  }
+  if (playerAvatars.some((item) => item.id === normalizedAvatar)) {
+    return (
+      <span className={`player-avatar player-avatar-illustration ${className}`} aria-label={`${nickname}'s avatar`}>
+        <AvatarIllustration avatar={normalizedAvatar} />
+      </span>
+    );
+  }
+  return (
+    <span className={`player-avatar player-avatar-emoji ${className}`} aria-label={`${nickname}'s avatar`}>
+      {avatar || defaultPlayerAvatar}
+    </span>
+  );
+}
+
+async function readAvatarFile(file: File): Promise<string> {
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    throw new Error("Choose a PNG, JPEG, or WebP image.");
+  }
+  if (file.size > 5 * 1024 * 1024) throw new Error("Choose an image smaller than 5 MB.");
+
+  const source = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") resolve(reader.result);
+      else reject(new Error("Could not read that image."));
+    };
+    reader.onerror = () => reject(new Error("Could not read that image."));
+    reader.readAsDataURL(file);
+  });
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const element = new Image();
+    element.onload = () => resolve(element);
+    element.onerror = () => reject(new Error("That image could not be opened."));
+    element.src = source;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = 192;
+  canvas.height = 192;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Photo uploads are unavailable in this browser.");
+  const cropSize = Math.min(image.naturalWidth, image.naturalHeight);
+  context.drawImage(
+    image,
+    (image.naturalWidth - cropSize) / 2,
+    (image.naturalHeight - cropSize) / 2,
+    cropSize,
+    cropSize,
+    0,
+    0,
+    canvas.width,
+    canvas.height,
+  );
+  return canvas.toDataURL("image/jpeg", 0.78);
+}
+
+function PlayerIdentityForm({
+  initialIdentity,
+  firstUse,
+  onSave,
+  onCancel,
+}: {
+  initialIdentity: PlayerIdentity | null;
+  firstUse: boolean;
+  onSave: (identity: PlayerIdentity) => void | Promise<void>;
+  onCancel?: () => void;
+}) {
+  const [nickname, setNickname] = useState(initialIdentity?.nickname ?? "");
+  const [avatar, setAvatar] = useState(normalizePlayerAvatar(initialIdentity?.avatar ?? defaultPlayerAvatar));
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function handleUpload(file: File | undefined) {
+    if (!file) return;
+    setError("");
+    setSaving(true);
+    try {
+      setAvatar(await readAvatarFile(file));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not load that photo.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const cleanName = nickname.trim();
+    if (!cleanName) {
+      setError("Enter a nickname for your player card.");
+      return;
+    }
+    setError("");
+    setSaving(true);
+    try {
+      await onSave({ nickname: cleanName.slice(0, 24), avatar });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not save your player card.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className={`identity-experience ${firstUse ? "identity-first-use" : "identity-edit-mode"}`}>
+      <form className="identity-workspace" onSubmit={submit}>
+        <header className="identity-header">
+          <Logo />
+          <span className="identity-progress"><i /> PLAYER SETUP <b>01 <em>/ 01</em></b></span>
+          {!firstUse && onCancel && (
+            <button type="button" className="identity-close" onClick={onCancel} aria-label="Close profile editor">
+              <Icon name="x" />
+            </button>
+          )}
+        </header>
+        <div className="identity-layout">
+          <section className="identity-showcase" aria-label="Live player card preview">
+            <div className="identity-copy">
+              <span className="identity-eyebrow"><i /> YOUR PLAYER CARD</span>
+              <h1>{firstUse ? <>Be known.<br /><span>Stay unreadable.</span></> : <>Make it<br /><span>recognizably you.</span></>}</h1>
+              <p>A familiar face for your crew. A different role every time.</p>
+            </div>
+            <article className="identity-card-preview">
+              <div className="identity-card-topline">
+                <span>IMPOSTER <i>®</i></span>
+                <span>PLAYER NO. 001</span>
+              </div>
+              <div className="identity-card-art">
+                <span className="identity-card-orbit identity-orbit-one" />
+                <span className="identity-card-orbit identity-orbit-two" />
+                <span className="identity-card-sigil"><i /><i /></span>
+                <PlayerAvatar avatar={avatar} nickname={nickname || "Player"} className="identity-preview-avatar" />
+                <span className="identity-card-star">✳</span>
+              </div>
+              <div className="identity-card-name">
+                <small>KNOWN AS</small>
+                <strong>{nickname.trim() || "YOUR NAME"}</strong>
+              </div>
+              <div className="identity-card-bottom">
+                <span><i /> IDENTITY LOCKED IN</span>
+                <span>ROLE: <b>UNKNOWN</b></span>
+              </div>
+            </article>
+            <div className="identity-card-caption">
+              <span>01</span><i /><span>YOUR ROLE CHANGES. YOUR CARD DOESN&apos;T.</span>
+            </div>
+          </section>
+
+          <section className="identity-editor">
+            <div className="identity-editor-heading">
+              <span>LET&apos;S GET YOU IN THE GAME</span>
+              <p>Your profile lives on this device. No account, no fuss.</p>
+            </div>
+            <label className="identity-field">
+              <span><b>01</b> PLAYER NAME</span>
+              <div className="identity-input-wrap">
+                <input
+                  value={nickname}
+                  onChange={(event) => setNickname(event.target.value)}
+                  maxLength={24}
+                  autoComplete="nickname"
+                  placeholder="What should we call you?"
+                  autoFocus={firstUse}
+                />
+                <small>{nickname.length}<i>/24</i></small>
+              </div>
+              <small className="identity-field-note">This is how you&apos;ll appear to your friends.</small>
+            </label>
+            <div className="avatar-picker">
+              <div className="avatar-picker-heading">
+                <span><b>02</b> PICK YOUR LOOK</span>
+                <label className="avatar-upload">
+                  <Icon name="plus" size={13} /> Add a photo
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(event) => {
+                      void handleUpload(event.target.files?.[0]);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
+              <div className="avatar-options">
+                {playerAvatars.map((option, index) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    className={`avatar-option avatar-option-${index}${avatar === option.id ? " selected" : ""}`}
+                    onClick={() => setAvatar(option.id)}
+                    aria-label={`Choose ${option.name} avatar`}
+                    aria-pressed={avatar === option.id}
+                    title={option.name}
+                  >
+                    <AvatarIllustration avatar={option.id} />
+                    {avatar === option.id && <i className="avatar-selection-mark"><Icon name="check" size={10} /></i>}
+                  </button>
+                ))}
+              </div>
+              <p className="identity-field-note">{avatar.startsWith("data:image/") ? "Your photo is ready." : "Pick a character, or bring your own."}</p>
+            </div>
+            {error && <p className="form-error" role="alert">{error}</p>}
+            <div className="identity-submit-row">
+              <button className="identity-save" disabled={saving || !nickname.trim()}>
+                <span>{saving ? "PREPARING YOUR CARD…" : firstUse ? "MAKE IT OFFICIAL" : "SAVE CHANGES"}</span>
+                <i><Icon name="arrow" size={17} /></i>
+              </button>
+              <small><Icon name="lock" size={12} /> YOUR ROLE STAYS SECRET. ALWAYS.</small>
+            </div>
+          </section>
+        </div>
+      </form>
+    </div>
+  );
 }
 
 function Home({
+  identity,
+  onEditIdentity,
   onCreate,
   onJoin,
 }: {
-  onCreate: () => void;
-  onJoin: (code: string, name: string) => Promise<void>;
+  identity: PlayerIdentity;
+  onEditIdentity: () => void;
+  onCreate: (mode: GameSettings["gameMode"]) => void;
+  onJoin: (code: string) => Promise<void>;
 }) {
   const [joinOpen, setJoinOpen] = useState(false);
   const [code, setCode] = useState("");
-  const [name, setName] = useState(savedName);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState("");
 
@@ -347,7 +715,7 @@ function Home({
     setError("");
     setJoining(true);
     try {
-      await onJoin(code, name);
+      await onJoin(code);
       setJoinOpen(false);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not join this game.");
@@ -364,9 +732,8 @@ function Home({
         <Logo />
         <div className="header-actions">
           <PwaInstallButton />
-          <button className="avatar-button" aria-label="Player profile">
-            <span className="online-dot" />
-            <span>{name.trim().slice(0, 2).toUpperCase() || "AX"}</span>
+          <button className="avatar-button" aria-label="Edit player profile" onClick={onEditIdentity}>
+            <PlayerAvatar avatar={identity.avatar} nickname={identity.nickname} />
           </button>
         </div>
       </header>
@@ -407,12 +774,12 @@ function Home({
             </div>
           </div>
           <div className="main-actions">
-            <button className="primary-button" onClick={onCreate}>
+            <button className="primary-button" onClick={() => onCreate("classic")}>
               <span className="play-icon">▶</span>Play now
               <Icon name="arrow" />
             </button>
             <div className="secondary-actions">
-              <button className="secondary-button" onClick={onCreate}>
+              <button className="secondary-button" onClick={() => onCreate("classic")}>
                 <Icon name="plus" /> Create game
               </button>
               <button
@@ -447,9 +814,9 @@ function Home({
             </button>
           </div>
           <div className="mode-grid">
-            <button className="mode-card featured" onClick={onCreate}>
+            <button className="mode-card featured" onClick={() => onCreate("classic")}>
               <span className="mode-icon">
-                <Icon name="bolt" />
+                <ModeArtwork mode="classic" />
               </span>
               <span className="mode-copy">
                 <b>Classic</b>
@@ -460,22 +827,22 @@ function Home({
                 <Icon name="chevron" />
               </span>
             </button>
-            <button className="mode-card" disabled>
+            <button className="mode-card rapid-mode-card" onClick={() => onCreate("rapid")}>
               <span className="mode-icon purple">
-                <Icon name="clock" />
+                <ModeArtwork mode="rapid" />
               </span>
               <span className="mode-copy">
                 <b>Rapid fire</b>
                 <small>Think fast. Talk faster.</small>
               </span>
               <span className="mode-meta">
-                <i>5 min</i>
-                <Icon name="lock" size={17} />
+                <i>20 sec</i>
+                <Icon name="chevron" />
               </span>
             </button>
             <button className="mode-card" disabled>
               <span className="mode-icon dark">
-                <Icon name="globe" />
+                <ModeArtwork mode="world" />
               </span>
               <span className="mode-copy">
                 <b>World tour</b>
@@ -539,15 +906,7 @@ function Home({
             </span>
             <span className="kicker">Your crew is waiting</span>
             <h2>Join a game</h2>
-            <p>Enter your name and the 6-character code from your host.</p>
-            <input
-              className="name-input"
-              maxLength={24}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Your name"
-              aria-label="Your name"
-            />
+            <p>Your player card is ready. Enter the 6-character code from your host.</p>
             <input
               maxLength={6}
               value={code}
@@ -565,7 +924,7 @@ function Home({
             )}
             <button
               className="primary-button"
-              disabled={joining || code.length !== 6 || !name.trim()}
+              disabled={joining || code.length !== 6}
               onClick={() => void handleJoin()}
             >
               {joining ? "Joining…" : "Enter game"} <Icon name="arrow" />
@@ -615,6 +974,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
 }
 
 const defaultSettings: GameSettings = {
+  gameMode: "classic",
   maxPlayers: 8,
   imposters: 1,
   category: "all",
@@ -626,29 +986,34 @@ const defaultSettings: GameSettings = {
 };
 
 function CreateGame({
+  identity,
+  onEditIdentity,
   initialSettings,
   roomExists,
   onBack,
   onCreate,
 }: {
+  identity: PlayerIdentity;
+  onEditIdentity: () => void;
   initialSettings: GameSettings;
   roomExists: boolean;
   onBack: () => void;
-  onCreate: (settings: GameSettings, name: string) => Promise<void>;
+  onCreate: (settings: GameSettings) => Promise<void>;
 }) {
   const [imposters, setImposters] = useState(initialSettings.imposters);
   const [players, setPlayers] = useState(initialSettings.maxPlayers);
   const [category, setCategory] = useState(initialSettings.category);
   const [difficulty, setDifficulty] = useState(initialSettings.difficulty);
+  const [gameMode, setGameMode] = useState(initialSettings.gameMode ?? "classic");
   const [timer, setTimer] = useState(initialSettings.clueTimer);
   const [hint, setHint] = useState(initialSettings.imposterHint);
   const [finalGuess, setFinalGuess] = useState(initialSettings.finalGuess);
   const [customRules, setCustomRules] = useState(Boolean(initialSettings.customRules));
   const [rulesText, setRulesText] = useState(initialSettings.customRules);
-  const [name, setName] = useState(savedName);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const settings: GameSettings = {
+    gameMode,
     maxPlayers: players,
     imposters,
     category,
@@ -663,8 +1028,7 @@ function CreateGame({
     setError("");
     setSaving(true);
     try {
-      await onCreate(settings, name);
-      saveName(name);
+      await onCreate(settings);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not save this game.");
     } finally {
@@ -682,8 +1046,8 @@ function CreateGame({
         <Logo />
         <div className="header-actions">
           <PwaInstallButton />
-          <button className="icon-button" aria-label="Profile">
-            <Icon name="profile" />
+          <button className="avatar-button" aria-label="Edit player profile" onClick={onEditIdentity}>
+            <PlayerAvatar avatar={identity.avatar} nickname={identity.nickname} />
           </button>
         </div>
       </header>
@@ -695,6 +1059,34 @@ function CreateGame({
           <h1>Set the stage.</h1>
           <p>Fine-tune the chaos before your crew joins.</p>
         </div>
+        <section className="game-mode-picker" aria-label="Choose a game mode">
+          <button
+            className={gameMode === "classic" ? "selected" : ""}
+            onClick={() => setGameMode("classic")}
+          >
+            <Icon name="bolt" size={16} />
+            <span>
+              <b>Classic</b>
+              <small>Time per player</small>
+            </span>
+          </button>
+          <button
+            className={gameMode === "rapid" ? "selected rapid-selected" : ""}
+            onClick={() => setGameMode("rapid")}
+          >
+            <Icon name="clock" size={16} />
+            <span>
+              <b>Rapid Fire</b>
+              <small>20 seconds per player</small>
+            </span>
+          </button>
+        </section>
+        {gameMode === "rapid" && (
+          <p className="mode-description">
+            Players take turns giving one-word clues. Each player gets 20 seconds, and everyone can
+            read each clue before the next turn. Then vote as usual.
+          </p>
+        )}
         <div className="settings-layout">
           <div className="settings-column">
             <section className="settings-card">
@@ -778,33 +1170,48 @@ function CreateGame({
           </div>
           <div className="settings-column">
             <section className="settings-card compact-card">
-              <div className="setting-row timer-row">
-                <div className="setting-icon orange">
-                  <Icon name="clock" />
+              {gameMode === "rapid" ? (
+                <div className="rapid-timer-setting">
+                  <div className="setting-icon purple">
+                    <Icon name="clock" />
+                  </div>
+                  <div className="setting-copy">
+                    <b>Quick clue turns</b>
+                    <small>Time for everyone to hear each clue</small>
+                  </div>
+                  <strong>20<small> sec</small></strong>
                 </div>
-                <div className="setting-copy">
-                  <b>Clue timer</b>
-                  <small>Time per player</small>
-                </div>
-                <strong>
-                  {timer}
-                  <small> sec</small>
-                </strong>
-              </div>
-              <input
-                className="range"
-                type="range"
-                min="30"
-                max="120"
-                step="15"
-                value={timer}
-                onChange={(event) => setTimer(Number(event.target.value))}
-                style={{ "--progress": `${((timer - 30) / 90) * 100}%` } as React.CSSProperties}
-              />
-              <div className="range-labels">
-                <span>30s</span>
-                <span>2 min</span>
-              </div>
+              ) : (
+                <>
+                  <div className="setting-row timer-row">
+                    <div className="setting-icon orange">
+                      <Icon name="clock" />
+                    </div>
+                    <div className="setting-copy">
+                      <b>Clue timer</b>
+                      <small>Time per player</small>
+                    </div>
+                    <strong>
+                      {timer}
+                      <small> sec</small>
+                    </strong>
+                  </div>
+                  <input
+                    className="range"
+                    type="range"
+                    min="30"
+                    max="120"
+                    step="15"
+                    value={timer}
+                    onChange={(event) => setTimer(Number(event.target.value))}
+                    style={{ "--progress": `${((timer - 30) / 90) * 100}%` } as React.CSSProperties}
+                  />
+                  <div className="range-labels">
+                    <span>30s</span>
+                    <span>2 min</span>
+                  </div>
+                </>
+              )}
             </section>
             <section className="setting-section">
               <div className="section-label">
@@ -867,23 +1274,14 @@ function CreateGame({
               <Icon name="bolt" size={17} /> {imposters} imposter{imposters > 1 ? "s" : ""}
             </span>
             <span>
-              <Icon name="clock" size={17} /> {timer}s turns
+              <Icon name="clock" size={17} />{" "}
+              {gameMode === "rapid" ? "20s per player" : `${timer}s turns`}
             </span>
           </div>
           <div className="create-submit">
-            {!roomExists && (
-              <input
-                className="name-input"
-                maxLength={24}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Your name"
-                aria-label="Your name"
-              />
-            )}
             <button
               className="primary-button"
-              disabled={saving || (!roomExists && !name.trim())}
+              disabled={saving}
               onClick={() => void save()}
             >
               {saving ? "Saving…" : roomExists ? "Save lobby settings" : "Create lobby"}{" "}
@@ -902,6 +1300,8 @@ function CreateGame({
 }
 
 function Lobby({
+  identity,
+  onEditIdentity,
   room,
   players,
   userId,
@@ -913,6 +1313,8 @@ function Lobby({
   error,
   busy,
 }: {
+  identity: PlayerIdentity;
+  onEditIdentity: () => void;
   room: Room;
   players: Player[];
   userId: string;
@@ -948,14 +1350,14 @@ function Lobby({
         <Logo />
         <div className="header-actions">
           <PwaInstallButton />
-          <button
-            className="icon-button"
-            aria-label="Edit game settings"
-            onClick={onEdit}
-            disabled={!isHost}
-          >
-            <Icon name="edit" />
+          <button className="avatar-button" aria-label="Edit player profile" onClick={onEditIdentity}>
+            <PlayerAvatar avatar={identity.avatar} nickname={identity.nickname} />
           </button>
+          {isHost && (
+            <button className="icon-button" aria-label="Edit game settings" onClick={onEdit}>
+              <Icon name="edit" />
+            </button>
+          )}
         </div>
       </header>
       <main className="lobby">
@@ -982,11 +1384,8 @@ function Lobby({
           <div className="player-list">
             {players.map((player, index) => (
               <div key={player.id}>
-                <i
-                  className={`face ${["face-blue", "face-orange", "face-purple", "face-green"][index % 4]}`}
-                >
-                  {player.display_name.slice(0, 1).toUpperCase()}
-                </i>
+                <PlayerAvatar avatar={player.avatar} nickname={player.display_name}
+                  className={`face ${["face-blue", "face-orange", "face-purple", "face-green"][index % 4]}`} />
                 <span>
                   <b>
                     {player.display_name}
@@ -1016,7 +1415,11 @@ function Lobby({
             {categories.find((item) => item.key === room.settings.category)?.name ?? "Mix it up"}
           </span>
           <span>{room.settings.difficulty}</span>
-          <span>{room.settings.clueTimer}s clue timer</span>
+          <span>
+            {room.settings.gameMode === "rapid"
+              ? "Rapid Fire · 20s per clue"
+              : `${room.settings.clueTimer}s per clue`}
+          </span>
         </div>
         {error && (
           <p className="form-error" role="alert">
@@ -1058,6 +1461,8 @@ function Lobby({
 }
 
 function GameScreen({
+  identity,
+  onEditIdentity,
   room,
   players,
   game,
@@ -1072,6 +1477,8 @@ function GameScreen({
   error,
   busy,
 }: {
+  identity: PlayerIdentity;
+  onEditIdentity: () => void;
   room: Room;
   players: Player[];
   game: GameSession;
@@ -1095,13 +1502,35 @@ function GameScreen({
   const [result, setResult] = useState<GameResult | null>(null);
   const [loadingResult, setLoadingResult] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState(0);
+  const revealRoleButton = useRef<HTMLButtonElement>(null);
+  const hideRoleButton = useRef<HTMLButtonElement>(null);
+  const roleHasBeenOpened = useRef(false);
   const myPlayer = players.find((player) => player.id === userId);
   const currentPlayer = players.find((player) => player.id === game.current_turn_player_id);
   const currentClues = clues.filter((entry) => entry.round_number === game.round_number);
+  const myClue = currentClues.find((entry) => entry.player_id === userId);
+  const activePlayerCount = players.filter((player) => !player.is_eliminated).length;
+
+  function playerAvatar(id: string) {
+    const player = players.find((entry) => entry.id === id);
+    return player ? (
+      <PlayerAvatar avatar={player.avatar} nickname={player.display_name} className="game-list-avatar" />
+    ) : null;
+  }
 
   useEffect(() => {
     setVoted(hasVoted);
   }, [game.phase, hasVoted]);
+
+  useEffect(() => {
+    setRevealed(false);
+  }, [game.round_number, game.phase]);
+
+  useEffect(() => {
+    if (!roleHasBeenOpened.current) return;
+    const activeButton = revealed ? hideRoleButton.current : revealRoleButton.current;
+    activeButton?.focus({ preventScroll: true });
+  }, [revealed]);
 
   useEffect(() => {
     const deadline = game.turn_deadline;
@@ -1169,6 +1598,9 @@ function GameScreen({
         <Logo />
         <div className="header-actions">
           <PwaInstallButton />
+          <button className="avatar-button" aria-label="Edit player profile" onClick={onEditIdentity}>
+            <PlayerAvatar avatar={identity.avatar} nickname={identity.nickname} />
+          </button>
           <span className="game-round">
             Round {game.round_number} · {room.code}
           </span>
@@ -1176,11 +1608,13 @@ function GameScreen({
       </header>
       <main className="lobby game-main">
         <span className="lobby-status">
-          <i /> Game in progress
+          <i /> {room.settings.gameMode === "rapid" ? "Rapid Fire" : "Game in progress"}
         </span>
         <p className="kicker">
           {game.phase === "clue"
-            ? "Clue round"
+            ? room.settings.gameMode === "rapid"
+              ? "Rapid Fire · clue turn"
+              : "Clue round"
             : game.phase === "vote"
               ? "Time to vote"
               : game.phase === "final_guess"
@@ -1189,7 +1623,9 @@ function GameScreen({
         </p>
         <h1 className="game-heading">
           {game.phase === "clue"
-            ? "Stay subtle."
+            ? room.settings.gameMode === "rapid"
+              ? "Think fast."
+              : "Stay subtle."
             : game.phase === "vote"
               ? "Who’s the imposter?"
               : game.phase === "final_guess"
@@ -1197,31 +1633,67 @@ function GameScreen({
                 : "The truth is out."}
         </h1>
         {game.phase !== "result" && (
-          <button
-            className={`role-card ${role?.is_imposter ? "imposter-role" : ""}`}
-            onClick={() => setRevealed(!revealed)}
-            aria-label={revealed ? "Hide your secret role" : "Reveal your secret role"}
+          <div
+            className={`role-card-scene ${revealed ? "is-revealed" : ""} ${role?.is_imposter ? "imposter-role" : ""}`}
           >
-            {revealed && role ? (
-              <>
-                <small>Your secret role</small>
-                <strong>{role.is_imposter ? "IMPOSTER" : role.word}</strong>
-                <span>
-                  {role.is_imposter
-                    ? role.category_hint
-                      ? `Hint: ${role.category_hint}`
-                      : "No hint — bluff your way through."
-                    : "You’re a civilian. Find the imposter."}
-                </span>
-              </>
-            ) : (
-              <>
-                <small>Only you can see this</small>
-                <strong>Tap to reveal your role</strong>
-                <span>Keep your screen private.</span>
-              </>
-            )}
-          </button>
+            <div className="role-card-flipper">
+              <button
+                className="role-card-face role-card-hidden"
+                ref={revealRoleButton}
+                onClick={() => {
+                  roleHasBeenOpened.current = true;
+                  setRevealed(true);
+                }}
+                disabled={!role}
+                aria-label="Tap to reveal your secret role"
+                aria-hidden={revealed}
+                tabIndex={revealed ? -1 : 0}
+              >
+                <span className="role-card-index">PLAYER / {String(game.round_number).padStart(2, "0")}</span>
+                <span className="mystery-eyes" aria-hidden="true"><i /><i /></span>
+                <strong>WHO&apos;S FAKING IT?</strong>
+                <small>{role ? "Tap to reveal your role" : "Loading your private role…"}</small>
+              </button>
+              <div
+                className="role-card-face role-card-revealed"
+                aria-live="polite"
+                aria-hidden={!revealed}
+              >
+                {role && (
+                  <>
+                    <span className="role-card-index">{role.is_imposter ? "IDENTITY UNKNOWN" : "CIVILIAN"}</span>
+                    <PlayerAvatar
+                      avatar={identity.avatar}
+                      nickname={identity.nickname}
+                      className="role-card-avatar"
+                    />
+                    <small className="role-card-known-as">KNOWN AS</small>
+                    <b className="role-card-nickname">{identity.nickname}</b>
+                    <span className="role-card-role">{role.is_imposter ? "IMPOSTER" : "CIVILIAN"}</span>
+                    {role.is_imposter ? (
+                      <p className="role-card-secret">
+                        {role.category_hint ? `CATEGORY · ${role.category_hint}` : "BLEND IN. FIND THE WORD."}
+                      </p>
+                    ) : (
+                      <>
+                        <small className="role-card-word-label">YOUR SECRET WORD</small>
+                        <strong className="role-card-word">{role.word}</strong>
+                        {role.category && <span className="role-card-category">{role.category}</span>}
+                      </>
+                    )}
+                    <button
+                      ref={hideRoleButton}
+                      className="role-hide-button"
+                      onClick={() => setRevealed(false)}
+                      tabIndex={revealed ? 0 : -1}
+                    >
+                      Hide role
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         )}
         {game.phase === "clue" && (
           <section className="game-panel">
@@ -1231,36 +1703,70 @@ function GameScreen({
             <p>
               {myPlayer?.is_eliminated
                 ? "You were voted out. Watch the remaining players finish the game."
+                : room.settings.gameMode === "rapid"
+                  ? myPlayer?.is_eliminated
+                    ? "You were voted out. Watch the remaining players finish the round."
+                    : myClue
+                      ? "Your clue is in. Listen to the next player and keep track of the clues."
+                      : currentPlayer?.id === userId
+                        ? "Your turn. Give one word that hints at the secret without revealing it."
+                        : `${playerName(game.current_turn_player_id)} is giving a clue. Listen carefully.`
                 : currentPlayer?.id === userId
                   ? "It’s your turn. Give a clue that does not reveal the word."
                   : `${playerName(game.current_turn_player_id)} is giving a clue.`}
             </p>
+            {room.settings.gameMode === "rapid" && (
+              <div className="rapid-round-status" role="status">
+                <span>
+                  {currentClues.length} / {activePlayerCount} clues submitted
+                </span>
+                <span>
+                  {currentPlayer
+                    ? `${currentPlayer.display_name} · ${secondsRemaining}s`
+                    : `${secondsRemaining}s`}
+                </span>
+              </div>
+            )}
             {currentClues.map((entry) => (
               <div className="clue-row" key={entry.id}>
-                <b>{playerName(entry.player_id)}</b>
+                <b className="game-clue-player">{playerAvatar(entry.player_id)}{playerName(entry.player_id)}</b>
                 <span>{entry.clue}</span>
               </div>
             ))}
             {!myPlayer?.is_eliminated &&
               game.current_turn_player_id === userId &&
-              !currentClues.some((entry) => entry.player_id === userId) && (
+              !myClue && (
                 <div className="game-action">
                   <input
                     value={clue}
                     maxLength={80}
                     onChange={(event) => setClue(event.target.value)}
-                    placeholder="Your clue (max 80 characters)"
+                    placeholder={
+                      room.settings.gameMode === "rapid"
+                        ? "Your one-word clue"
+                        : "Your clue (max 80 characters)"
+                    }
                   />
                   <button
                     className="primary-button"
-                    disabled={busy || !clue.trim()}
+                    disabled={
+                      busy ||
+                      !clue.trim() ||
+                      (room.settings.gameMode === "rapid" && /\s/.test(clue.trim()))
+                    }
                     onClick={() => onClue(clue)}
                   >
-                    Send clue <Icon name="arrow" />
+                    {room.settings.gameMode === "rapid" ? "Send one-word clue" : "Send clue"}{" "}
+                    <Icon name="arrow" />
                   </button>
+                  {room.settings.gameMode === "rapid" && /\s/.test(clue.trim()) && (
+                    <small className="rapid-clue-hint">Rapid Fire clues must be one word.</small>
+                  )}
                 </div>
               )}
-            <small>{secondsRemaining} seconds remaining in this turn</small>
+            {room.settings.gameMode !== "rapid" && (
+              <small>{secondsRemaining} seconds remaining in this turn</small>
+            )}
           </section>
         )}
         {game.phase === "vote" && (
@@ -1296,7 +1802,7 @@ function GameScreen({
                         });
                       }}
                     >
-                      <span>{player.display_name}</span>
+                      <span className="game-vote-player"><PlayerAvatar avatar={player.avatar} nickname={player.display_name} className="game-list-avatar" />{player.display_name}</span>
                       <Icon name="chevron" />
                     </button>
                   ))}
@@ -1346,6 +1852,7 @@ function GameScreen({
                   {result.players.map((player) => (
                     <div className="clue-row" key={player.player_id}>
                       <b>
+                        {playerAvatar(player.player_id)}
                         {playerName(player.player_id)}
                         {player.is_imposter ? " · Imposter" : ""}
                       </b>
@@ -1377,6 +1884,8 @@ function GameScreen({
 type Snapshot = Awaited<ReturnType<typeof loadRoom>>;
 
 export default function App() {
+  const [identity, setIdentity] = useState<PlayerIdentity | null>(() => savedIdentity());
+  const [profileOpen, setProfileOpen] = useState(false);
   const [screen, setScreen] = useState<"home" | "create" | "room">("home");
   const [roomId, setRoomId] = useState("");
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -1466,12 +1975,14 @@ export default function App() {
     setError("");
   }
 
-  async function handleJoin(code: string, name: string) {
-    const response = await joinRoom(code, saveName(name));
+  async function handleJoin(code: string) {
+    if (!identity) throw new Error("Create your player card before joining a game.");
+    const response = await joinRoom(code, identity.nickname, identity.avatar);
     await enterRoom(response);
   }
 
-  async function handleCreate(settingsToSave: GameSettings, name: string) {
+  async function handleCreate(settingsToSave: GameSettings) {
+    if (!identity) throw new Error("Create your player card before starting a game.");
     setBusy(true);
     setError("");
     try {
@@ -1480,7 +1991,7 @@ export default function App() {
         setSettings(settingsToSave);
         setScreen("room");
       } else {
-        const response = await createRoom(saveName(name), settingsToSave);
+        const response = await createRoom(identity.nickname, settingsToSave, identity.avatar);
         setSettings(settingsToSave);
         await enterRoom(response);
       }
@@ -1524,18 +2035,52 @@ export default function App() {
     }
   }
 
-  if (screen === "home") return <Home onCreate={() => setScreen("create")} onJoin={handleJoin} />;
-  if (screen === "create")
+  async function handleSaveIdentity(nextIdentity: PlayerIdentity) {
+    if (roomId) await updateMyIdentity(roomId, nextIdentity.nickname, nextIdentity.avatar);
+    const saved = saveIdentity(nextIdentity);
+    setIdentity(saved);
+    setProfileOpen(false);
+    if (roomId) setSnapshot(await loadRoom(roomId));
+  }
+
+  if (!identity) {
     return (
+      <PlayerIdentityForm
+        initialIdentity={null}
+        firstUse
+        onSave={(nextIdentity) => {
+          setIdentity(saveIdentity(nextIdentity));
+        }}
+      />
+    );
+  }
+
+  let page: React.ReactNode;
+  if (screen === "home") {
+    page = (
+      <Home
+        identity={identity}
+        onEditIdentity={() => setProfileOpen(true)}
+        onCreate={(mode) => {
+          setSettings({ ...defaultSettings, gameMode: mode });
+          setScreen("create");
+        }}
+        onJoin={handleJoin}
+      />
+    );
+  } else if (screen === "create") {
+    page = (
       <CreateGame
-        initialSettings={roomId ? (snapshot?.room.settings ?? settings) : defaultSettings}
+        identity={identity}
+        onEditIdentity={() => setProfileOpen(true)}
+        initialSettings={roomId ? (snapshot?.room.settings ?? settings) : settings}
         roomExists={Boolean(roomId)}
         onBack={() => setScreen(roomId ? "room" : "home")}
         onCreate={handleCreate}
       />
     );
-  if (!snapshot)
-    return (
+  } else if (!snapshot) {
+    page = (
       <div className="app-shell create-page">
         <main className="lobby">
           <p>Connecting to your game…</p>
@@ -1556,10 +2101,11 @@ export default function App() {
         </main>
       </div>
     );
-
-  if (snapshot.game)
-    return (
+  } else if (snapshot.game) {
+    page = (
       <GameScreen
+        identity={identity}
+        onEditIdentity={() => setProfileOpen(true)}
         room={snapshot.room}
         players={snapshot.players}
         game={snapshot.game}
@@ -1583,26 +2129,43 @@ export default function App() {
         busy={busy}
       />
     );
+  } else {
+    page = (
+      <Lobby
+        identity={identity}
+        onEditIdentity={() => setProfileOpen(true)}
+        room={snapshot.room}
+        players={snapshot.players}
+        userId={snapshot.userId}
+        onlineIds={onlineIds}
+        onBack={() => void handleLeave()}
+        onReady={(ready) => {
+          void runAction(() => setReady(roomId, ready));
+        }}
+        onStart={() => {
+          void runAction(() => startGame(roomId));
+        }}
+        onEdit={() => {
+          setSettings(snapshot.room.settings);
+          setScreen("create");
+        }}
+        error={error}
+        busy={busy}
+      />
+    );
+  }
 
   return (
-    <Lobby
-      room={snapshot.room}
-      players={snapshot.players}
-      userId={snapshot.userId}
-      onlineIds={onlineIds}
-      onBack={() => void handleLeave()}
-      onReady={(ready) => {
-        void runAction(() => setReady(roomId, ready));
-      }}
-      onStart={() => {
-        void runAction(() => startGame(roomId));
-      }}
-      onEdit={() => {
-        setSettings(snapshot.room.settings);
-        setScreen("create");
-      }}
-      error={error}
-      busy={busy}
-    />
+    <>
+      {page}
+      {profileOpen && (
+        <PlayerIdentityForm
+          initialIdentity={identity}
+          firstUse={false}
+          onCancel={() => setProfileOpen(false)}
+          onSave={handleSaveIdentity}
+        />
+      )}
+    </>
   );
 }

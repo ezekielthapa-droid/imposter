@@ -1,6 +1,7 @@
 import { ensureGuestSession, getSupabaseClient } from "./supabase";
 
 export type GameSettings = {
+  gameMode: "classic" | "rapid";
   maxPlayers: number;
   imposters: number;
   category: string;
@@ -23,6 +24,7 @@ export type Player = {
   id: string;
   room_id: string;
   display_name: string;
+  avatar: string;
   is_ready: boolean;
   is_eliminated: boolean;
   joined_at: string;
@@ -48,6 +50,7 @@ export type GameClue = {
 export type GameRole = {
   is_imposter: boolean;
   word: string | null;
+  category: string | null;
   category_hint: string | null;
 };
 
@@ -65,22 +68,39 @@ function unwrapRpc<T>(data: unknown, error: { message: string } | null): T {
   return data as T;
 }
 
-export async function createRoom(displayName: string, settings: GameSettings) {
+async function saveRoomIdentity(roomId: string, displayName: string, avatar: string) {
+  const { data, error } = await getSupabaseClient().rpc("update_my_identity", {
+    p_room_id: roomId,
+    p_display_name: displayName,
+    p_avatar: avatar,
+  });
+  unwrapRpc<null>(data, error);
+}
+
+export async function createRoom(displayName: string, settings: GameSettings, avatar: string) {
   await ensureGuestSession();
   const { data, error } = await getSupabaseClient().rpc("create_room", {
     p_display_name: displayName,
     p_settings: settings,
   });
-  return unwrapRpc<RoomResponse>(data, error);
+  const room = unwrapRpc<RoomResponse>(data, error);
+  await saveRoomIdentity(room.room_id, displayName, avatar);
+  return room;
 }
 
-export async function joinRoom(code: string, displayName: string) {
+export async function joinRoom(code: string, displayName: string, avatar: string) {
   await ensureGuestSession();
   const { data, error } = await getSupabaseClient().rpc("join_room", {
     p_code: code,
     p_display_name: displayName,
   });
-  return unwrapRpc<RoomResponse>(data, error);
+  const room = unwrapRpc<RoomResponse>(data, error);
+  await saveRoomIdentity(room.room_id, displayName, avatar);
+  return room;
+}
+
+export async function updateMyIdentity(roomId: string, displayName: string, avatar: string) {
+  await saveRoomIdentity(roomId, displayName, avatar);
 }
 
 export async function updateRoomSettings(roomId: string, settings: GameSettings) {
