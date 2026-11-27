@@ -253,12 +253,7 @@ function PwaInstallButton() {
 
   return (
     <>
-      {installed ? (
-        <span className="install-complete" role="status">
-          <Icon name="check" size={16} />
-          <span>Installed</span>
-        </span>
-      ) : (
+      {!installed && (
         <button
           className="install-button"
           aria-label="Install app"

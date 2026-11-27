@@ -32,8 +32,6 @@
 .install-button { min-height:40px; display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:0 15px; border:1px solid #c8fa4570; border-radius:13px; color:#dfff91; background:linear-gradient(145deg,#283319e8,#171b12e8); box-shadow:inset 0 1px #ffffff12,0 6px 22px #c8fa4510; font:700 11px 'Manrope'; letter-spacing:.15px; transition:transform .2s,border-color .2s,box-shadow .2s,background .2s }
 .install-button:hover { transform:translateY(-1px); border-color:#c8fa45; background:linear-gradient(145deg,#354522,#1a2013); box-shadow:inset 0 1px #ffffff16,0 8px 26px #c8fa4520 }
 .install-button svg { color:#c8fa45 }
-.install-complete { min-height:40px; display:inline-flex; align-items:center; gap:7px; padding:0 13px; border:1px solid #c8fa4530; border-radius:13px; color:#b8c892; background:#c8fa4509; font:600 10px 'Manrope' }
-.install-complete svg { color:#c8fa45 }
 .install-modal { width:100%; min-width:0; max-width:470px; max-height:calc(100dvh - 24px); overflow-y:auto; overscroll-behavior:contain; box-sizing:border-box; padding:24px; text-align:left; animation:slideUp .3s ease; background:radial-gradient(ellipse at 0 0,#424f9666,transparent 58%),linear-gradient(145deg,#151b2a,#090b10 72%); border-color:#6675b04a }
 .install-modal .close-button { top:12px; right:12px }
 .install-promo { min-width:0; min-height:108px; display:flex; align-items:center; gap:17px; padding:10px 24px 10px 10px }
